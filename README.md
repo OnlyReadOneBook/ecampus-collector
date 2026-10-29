@@ -39,6 +39,7 @@ playwright install chromium
 > 💡 **그냥 `./ec` 하나만 기억하세요.** venv 활성화 없이 바로 실행됩니다.
 > `./ec` = 자동 수집, `./ec login` = 자동 로그인 등록(1회), `./ec analyze` = 분석,
 > `./ec cleanup` = 잔재 폴더 정리, `./ec manual` = 수동 캡처,
+> `./ec lectures` = 온라인강의 미이수 차시 목록(`./ec lectures open` 은 그 차시들을 사파리 새 창으로 연다),
 > 그 외 인자는 collect.py로 그대로 전달 (예: `./ec --auto --menus 공지,과제`, `./ec --auto --headed`).
 
 ### 터미널 없이 실행 (더블클릭 앱)
