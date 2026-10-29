@@ -45,5 +45,16 @@ class TestParseWeek(unittest.TestCase):
         self.assertEqual(lectures.status(self.rows[0], datetime(2026, 10, 1)), "예정")
 
 
+class TestViewerItems(unittest.TestCase):
+    def test_cv_load_and_items(self):
+        import attend
+        html = ('<li class="item-title-lesson" style="" val="AAA^53365^1^10^N">a</li>'
+                '<li class="item-title-lesson" style="" val="BBB^53365^1^10^N">b</li>'
+                'cv.load("current", "AAA", "53365", "1", "10", "KJ1", "U1", "N");')
+        v = attend.viewer_items(html)
+        self.assertEqual((v["weeks"], v["ky"], v["ud"]), ("10", "KJ1", "U1"))
+        self.assertEqual(v["items"], [("AAA", "53365", "1"), ("BBB", "53365", "1")])
+
+
 if __name__ == "__main__":
     unittest.main()

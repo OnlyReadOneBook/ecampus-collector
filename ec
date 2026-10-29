@@ -6,6 +6,7 @@
 #   ./ec analyze      마감/놓친 항목 분석 (= python collect.py --analyze)
 #   ./ec cleanup      output/ 잔재 폴더 정리 (중복 병합·개명, 수집 안 함)
 #   ./ec lectures     온라인강의 미이수 차시 목록 (open: 사파리로 열기)
+#   ./ec attend       온라인강의 미이수 차시 출석을 HTTP 로 채움(메일 본인인증 번호 입력)
 #   ./ec manual       수동 캡처 (= python collect.py)
 #   ./ec <인자...>    collect.py에 인자 그대로 전달
 #                     예: ./ec --auto --menus 공지,과제
@@ -25,6 +26,7 @@ case "$1" in
     analyze)   exec "$PY" collect.py --analyze ;;
     cleanup)   exec "$PY" collect.py --cleanup ;;
     lectures)  shift; exec "$PY" lectures.py "$@" ;;
+    attend)    shift; exec "$PY" attend.py "$@" ;;
     manual)    exec "$PY" collect.py ;;
     *)         exec "$PY" collect.py "$@" ;;
 esac
