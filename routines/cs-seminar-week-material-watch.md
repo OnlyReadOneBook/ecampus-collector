@@ -16,7 +16,7 @@ description: "컴퓨터공학세미나 새 주차 강의자료가 올라오면 �
 - 창을 띄우지 않는다. collect.py 는 반드시 --headless 로 돌린다(notify.py·submit_report.py 는 원래 headless 다). 이 PC 에서는 GTA AFK 매크로가 돌고, 창이 GTA 포커스를 가져가면 방치 킥이 난다. GTA5_Enhanced 가 돌고 있으면 어떤 창도 앞으로 가져오지 않는다.
 - 파이썬 명령 앞에는 늘 `$env:PYTHONUTF8="1"; ` 를 붙인다. 스크립트가 ✓·✗ 를 찍는데 cp949 콘솔·리다이렉트 파일에서는 UnicodeEncodeError 로 죽는다.
 - 비밀번호를 묻거나 UI 폼에 직접 타이핑하지 않는다. 로그인은 스크립트가 윈도우 자격 증명 관리자(keyring)의 값으로 한다.
-- ilos 는 중복 로그인 시 기존 세션을 끊는다. 스크립트를 겹쳐 돌리지 않는다. 6단계의 attend.py 는 1~5단계의 스크립트가 모두 끝난 뒤에만 띄운다.
+- ilos 가 중복 로그인 때 기존 세션을 끊을 수 있어(attend.py 기준 미실측) 스크립트를 겹쳐 돌리지 않는다. 6단계의 attend.py 는 1~5단계가 끝난 뒤에 띄운다. 출석 시간은 서버에 쌓여 attend.py 를 멈췄다 다시 돌려도 채운 시간은 남는다(1031 실측). 그러니 제출(마감 있는 일)이 출석보다 먼저다. 출석이 도는 중에 제출이 필요하면 attend.py 를 멈추고 제출한 뒤 다시 띄운다.
 - 결제·메시지 전송은 하지 않는다. 제출은 4단계의 submit_report.py 한 번뿐이다. 6단계의 본인인증 메일은 Gmail 커넥터로 읽기만 한다.
 
 ## 0. 준비
@@ -69,7 +69,7 @@ RT_SEQ 는 `output\컴퓨터공학세미나\과제\posts\<번호>_<N>주차 온�
    ```
    창을 띄우지 않는다(-NoNewWindow). 돌려받은 Id 를 적어 둔다.
 3. 본인인증. 로그에 「본인인증 번호를 … 로 보냈습니다」가 찍힐 때까지 10초 간격으로 본다(최대 2분). 찍히면 Gmail 커넥터 `search_threads` 로 `from:ecampusreturn07@konkuk.ac.kr newer_than:1h` 를 찾고, `get_thread`(PLAIN_TEXT)의 **가장 최근** 메시지에서 「인증번호 NNNN」을 읽는다. 같은 스레드에 옛 번호가 쌓이니 날짜·시각이 지금 실행 이후인 것만 쓴다. 메일이 아직 없으면 20초 뒤 다시 찾는다(최대 3분). 번호는 BOM·줄바꿈 없이 쓴다: `Set-Content -LiteralPath "C:\Users\rlfjr\school\cs-seminar\runs\attend-code.txt" -Value "NNNN" -NoNewline -Encoding ascii`. 로그에 「✓ 본인인증 완료」가 찍히는지 본다. 「본인인증 실패」면 번호를 잘못 읽은 것이니 가장 최근 메일을 다시 보고, 그래도 안 되면 기록에 그 메시지를 적고 마무리로 간다.
-4. 대기. 차시당 남은 출석인정시간만큼 걸린다(수십 분). `Start-Sleep 240` 뒤 로그와 프로세스(`Get-Process -Id <Id> -ErrorAction SilentlyContinue`)를 보는 것을 프로세스가 끝날 때까지 반복한다. 전체 상한은 3시간이고, 넘으면 `Stop-Process -Id <Id>` 하고 「온강 시간 초과」로 기록한다. 기다리는 동안 다른 eCampus 스크립트를 돌리지 않는다(중복 로그인이 세션을 끊는다).
+4. 대기. 차시당 남은 출석인정시간만큼 걸린다(수십 분). `Start-Sleep 240` 뒤 로그와 프로세스(`Get-Process -Id <Id> -ErrorAction SilentlyContinue`)를 보는 것을 프로세스가 끝날 때까지 반복한다. 전체 상한은 3시간이고, 넘으면 `Stop-Process -Id <Id>` 하고 「온강 시간 초과」로 기록한다. 기다리는 동안 다른 eCampus 스크립트를 겹쳐 돌리지 않는다(중복 로그인이 세션을 끊을 수 있다). 다른 일이 급하면 멈추고 하고 다시 띄운다. 채운 시간은 남는다.
 5. 확인. 로그의 「✓ 출석인정시간 채움」 줄 수와 `navi·hisno·at 실패`·attend-last.err 의 Traceback 을 본다. 1번 명령을 한 번 더 돌려 서버 기준으로 미이수가 남았는지 본다. 기록 한 줄에 「온강 N차시 채움(과목·주차 나열), 남은 미이수 M」 꼴로 덧붙이고, 실패 줄이 있으면 그 메시지를 그대로 옮긴다.
 
 ## 실행 기록
