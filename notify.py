@@ -14,8 +14,15 @@ ilos 는 좌측 상단 배지로 알림(notification)과 할일(todo)을 준다:
     python notify.py            # 사람이 읽는 형태
     python notify.py --json     # JSON (자동화용)
     python notify.py --course 컴퓨터공학세미나
+    python notify.py --json --seen output/_notify_seen.json        # 새 알림만 "new" 로 표시, 파일은 안 바꾼다
+    python notify.py --json --seen output/_notify_seen.json --save-seen   # 비교 뒤 이번 결과로 기준선 갱신
+
+기준선 갱신(--save-seen)은 새 알림이 없을 때나 그 알림의 후속 처리(자료 받기·제출)가 끝난 뒤에만 한다.
+비교와 동시에 갱신하면 후속 처리가 실패해도 다음 실행이 그 알림을 새 것으로 못 본다
+(2026-10-27: 9주차 알림 감지 뒤 collect 실패, 기준선만 갱신돼 9주차가 영영 빠졌다).
 """
 import argparse, json, re, sys
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 
@@ -119,12 +126,42 @@ def fetch(course_filter: str = "") -> dict:
     return {"notifications": notis, "todos": todos}
 
 
+def _noti_key(n: dict) -> tuple:
+    return (n.get("date"), n.get("course"), n.get("kind"), n.get("title"))
+
+
+def diff_seen(data: dict, seen_path) -> dict:
+    """기준선 파일과 비교해 새 알림을 data["new"] 에 담는다. 파일은 건드리지 않는다.
+    기준선이 없으면 first_run=True 이고 new 는 비운다(이미 나온 알림을 새 것으로 오인하지 않게)."""
+    path = Path(seen_path)
+    if not path.exists():
+        return {**data, "first_run": True, "new": []}
+    # 손으로 고친 파일에 BOM 이 붙어 있어도 읽는다.
+    old = json.loads(path.read_text(encoding="utf-8-sig"))
+    seen = {_noti_key(n) for n in old.get("notifications", [])}
+    new = [n for n in data["notifications"] if _noti_key(n) not in seen]
+    return {**data, "first_run": False, "new": new}
+
+
+def save_seen(data: dict, seen_path) -> None:
+    keep = {"notifications": data["notifications"], "todos": data["todos"]}
+    Path(seen_path).write_text(json.dumps(keep, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--course", default="", help="과목명 부분일치 필터")
+    ap.add_argument("--seen", help="기준선 JSON 경로. 주면 새 알림을 new 로 표시한다(파일은 안 바꾼다)")
+    ap.add_argument("--save-seen", action="store_true", help="비교 뒤 이번 결과로 --seen 파일을 덮어쓴다")
     a = ap.parse_args()
+    if a.save_seen and not a.seen:
+        ap.error("--save-seen 은 --seen 과 함께 쓴다")
     data = fetch(a.course)
+    if a.seen:
+        data = diff_seen(data, a.seen)
+        if a.save_seen:
+            save_seen(data, a.seen)
     if a.json:
         print(json.dumps(data, ensure_ascii=False, indent=2))
         return
