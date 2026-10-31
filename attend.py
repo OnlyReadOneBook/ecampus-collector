@@ -141,11 +141,18 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="온라인강의 출석을 HTTP 로 채운다")
     ap.add_argument("--only", default="", help="과목명에 이 글자가 들어간 차시만")
     ap.add_argument("--code-file", type=Path, help="인증번호를 이 파일에서 읽는다(프롬프트 대신)")
+    ap.add_argument("--check", action="store_true",
+                    help="미이수 차시만 세고 끝낸다(본인인증 없음). 있으면 종료 코드 10 — 주기 감시용")
     args = ap.parse_args(argv)
 
     c = api.Client.from_keychain()
     c.login()
     todo = live_pending(c, args.only)
+    if args.check:
+        for r in todo:
+            print(f"미이수 {r['course']} {r['week']}주 {r['seq']}차시 {r['title']}", flush=True)
+        print(f"PENDING {len(todo)}")
+        return 10 if todo else 0
     if not todo:
         print("채울 차시가 없습니다.")
         return
@@ -169,4 +176,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
