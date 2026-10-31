@@ -7,6 +7,7 @@
 #   ./ec cleanup      output/ 잔재 폴더 정리 (중복 병합·개명, 수집 안 함)
 #   ./ec lectures     온라인강의 미이수 차시 목록 (open: 사파리로 열기)
 #   ./ec attend       온라인강의 미이수 차시 출석을 HTTP 로 채움(메일 본인인증 번호 입력)
+#   ./ec attend --check  미이수 차시만 센다(본인인증 없음, 있으면 종료 코드 10)
 #   ./ec manual       수동 캡처 (= python collect.py)
 #   ./ec <인자...>    collect.py에 인자 그대로 전달
 #                     예: ./ec --auto --menus 공지,과제
