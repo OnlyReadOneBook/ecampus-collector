@@ -15,7 +15,7 @@
 확인한다 — 확인 못 하면 실패로 보고한다(조용히 성공했다고 하지 않는다).
 
     python submit_report.py --rt-seq 14428381 --file ~/school/.../week3_summary.docx \
-        --text "3주차 요약서를 제출합니다." [--dry-run]
+        --text "3주차 요약서를 제출합니다." --user-approved   # 사용자가 제출을 지시했을 때만 [--dry-run]
 """
 import argparse, re, sys
 from pathlib import Path
@@ -153,7 +153,13 @@ def main():
                     help="첨부 업로드까지만 하고 제출은 안 함")
     ap.add_argument("--course", default=getattr(config, "AUTO_COURSE", "") or "",
                     help="먼저 들어갈 과목명 키워드(기본: config.AUTO_COURSE)")
+    ap.add_argument("--user-approved", action="store_true",
+                    help="사용자가 대화에서 이 과제 제출을 명시적으로 지시했을 때만 붙인다. 루틴·자동 실행은 붙이지 않는다")
     a = ap.parse_args()
+    if not a.dry_run and not a.user_approved:
+        sys.stderr.write("제출 거부: 과제 제출은 사용자가 그 주차 제출을 명시적으로 지시했을 때만 한다(1116). "
+                         "지시가 있으면 --user-approved 를 붙여 다시 실행한다. 루틴·자동 실행은 저장까지만 한다.\n")
+        sys.exit(3)
     sys.exit(submit(a.rt_seq, a.file.expanduser(), a.text, a.dry_run, a.course))
 
 
