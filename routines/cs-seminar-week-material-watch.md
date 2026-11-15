@@ -35,7 +35,7 @@ description: "컴퓨터공학세미나 새 주차 강의자료가 올라오면 �
 ## 2. 자료 받기
 1. config.py 의 AUTO_COURSE 줄을 python 으로 `AUTO_COURSE = "컴퓨터공학세미나"` 로 바꾼다(sed 는 없다). PowerShell 에서 따옴표가 깨지면 Bash 도구의 heredoc 으로 `.venv/Scripts/python - <<'EOF'` 를 쓴다.
 2. `.venv\Scripts\python collect.py --auto --headless --menus 강의자료,공지,과제,온라인강의` 를 PowerShell 도구 timeout 600000 으로 돌린다. 시간이 모자라 끊기면 같은 명령을 한 번 더 돌린다(이미 받은 첨부는 건너뛴다).
-3. 새 주차 N 의 `output\컴퓨터공학세미나\강의자료\posts\*<N>주차*\files\*.pdf` 가 실제로 있는지 본다. 없으면 요약서는 여기서 멈추고 6단계로 간다. 강의를 안 보고 요약서를 지어내지 않는다.
+3. 새 주차 N 의 `output\컴퓨터공학세미나\강의자료\posts\*<N>주차*\files\*.pdf` 가 실제로 있는지 본다. 없으면 요약서는 여기서 멈추고 6단계로 간다. 그다음 그 주차 강의 영상을 끝까지 본다: 학습창 본인인증 뒤 `online_view_navi.acl`·`online_view.acl` 로 HLS 주소를 얻어 ffmpeg 로 받고, 음성 전체를 받아쓰고 30초 간격 화면을 확인한다. PDF 와 지난 제출본만으로 요약서를 쓰지 않고, attend.py 의 출석 시간 채우기를 시청으로 치지 않는다. 영상이 없거나·안 열리거나·소리가 없거나·일부만 받아지거나·자료와 내용이 다르면 요약서를 쓰지 말고 멈춰 사용자에게 바로 알린다(1116 사용자 지시). 이 루틴은 1116 에 꺼져 있다.
 
 ## 3. 요약서 작성
 기준 두 가지를 먼저 읽는다.
