@@ -18,6 +18,7 @@ description: "컴퓨터공학세미나 새 주차 강의가 올라오면 영상�
 - 비밀번호를 묻거나 UI 폼에 직접 타이핑하지 않는다. 로그인은 스크립트가 윈도우 자격 증명 관리자(keyring)의 값으로 한다.
 - 결제·메시지 전송·과제 제출은 하지 않는다. submit_report.py 를 실행하지 않는다(사용자 승인 표시 없이는 스크립트가 거부한다). 학습창 본인인증 메일은 Gmail 커넥터로 읽기만 한다.
 - 출석 도중 notify.py 로그인은 attend.py 세션을 끊지 않았다(1031 실측). 그래도 다른 스크립트(collect)는 실측 전이라 겹쳐 돌리지 않는다. 6단계의 attend.py 는 1~5단계가 끝난 뒤에 띄운다. 출석 시간은 서버에 쌓여 attend.py 를 멈췄다 다시 돌려도 채운 시간은 남는다(1031 실측). 그러니 요약서(1~5단계)가 출석보다 먼저다.
+- 영상 받기·받아쓰기 도구(1125 설치): ffmpeg 는 `C:\Users\rlfjr\AppData\Local\Microsoft\WinGet\Links\ffmpeg.exe`(PATH 에 안 잡히면 이 경로로 부른다), 받아쓰기는 저장소 `.venv` 의 faster-whisper(`from faster_whisper import WhisperModel`, 한국어 강의는 `language="ko"`)다. 둘 중 하나가 없으면 요약서를 쓰지 말고 멈춰 기록에 무엇이 없는지 적는다.
 
 ## 0. 준비
 1. `git -C C:\Users\rlfjr\ecampus-collector checkout -- config.py` 뒤 `git -C C:\Users\rlfjr\ecampus-collector pull --ff-only` 로 도구를 최신으로 한다(config.py 의 AUTO_COURSE 는 2단계에서 다시 바꾼다).
