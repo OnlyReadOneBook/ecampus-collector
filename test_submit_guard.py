@@ -23,6 +23,13 @@ class T(unittest.TestCase):
         r = run("--rt-seq", "1", "--file", "/nonexistent.docx", "--dry-run")
         self.assertNotEqual(r.returncode, 3)
 
+    def test_multiple_files_are_each_checked_before_login(self):
+        # 두 번째 파일이 없으면 로그인 전에 그 파일 이름으로 멈춘다
+        ok = HERE / "submit_report.py"
+        r = run("--rt-seq", "1", "--file", str(ok), "/nonexistent2.cpp", "--dry-run")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nonexistent2.cpp", r.stderr + r.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
