@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""ilos 과제 제출 — 첨부 1개 + 짧은 본문.
+"""ilos 과제 제출 — 첨부 1개 이상 + 짧은 본문.
 
 제출 계약(3주차 과제 페이지에서 실측, 2026-09-12):
   첨부: POST /ilos/co/efile_upload_multiple2.acl  (plupload, path=K006, pf_st_flag=2)
@@ -58,14 +58,17 @@ def _course_frame(page):
     return page.main_frame
 
 
-def submit(rt_seq: str, file_path: Path, text: str, dry_run: bool,
+def submit(rt_seq: str, files: list, text: str, dry_run: bool,
            course: str = "") -> int:
-    if not file_path.is_file():
-        sys.exit(f"파일이 없습니다: {file_path}")
-    # 교내 방화벽이 한글 파일명 업로드를 막는다 — 미리 걸러 조용한 실패를 막는다.
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", file_path.name):
-        sys.exit(f"파일명에 영문·숫자 외 문자가 있습니다({file_path.name}). "
-                 "교내 방화벽이 한글 파일명 업로드를 차단합니다.")
+    for file_path in files:
+        if not file_path.is_file():
+            sys.exit(f"파일이 없습니다: {file_path}")
+        # 교내 방화벽이 한글 파일명 업로드를 막는다 — 미리 걸러 조용한 실패를 막는다.
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", file_path.name):
+            sys.exit(f"파일명에 영문·숫자 외 문자가 있습니다({file_path.name}). "
+                     "교내 방화벽이 한글 파일명 업로드를 차단합니다.")
+    if len({f.name for f in files}) != len(files):
+        sys.exit("같은 이름의 파일이 둘 이상입니다 — 제출 확인을 파일명으로 하므로 이름을 다르게 하세요.")
 
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(
@@ -100,15 +103,15 @@ def submit(rt_seq: str, file_path: Path, text: str, dry_run: bool,
 
         # 1) 첨부 — plupload 의 숨은 file input 에 직접 넣으면 페이지 JS 가 업로드한다
         finp = fr.locator("input[type=file][multiple]").first
-        finp.set_input_files(str(file_path))
+        finp.set_input_files([str(f) for f in files])
         seqs = ""
-        for _ in range(60):                       # 업로드 완료 = [name=chk] 가 생김
+        for _ in range(60 * len(files)):          # 업로드 완료 = 파일마다 [name=chk] 가 생김
             page.wait_for_timeout(500)
             seqs = fr.evaluate("() => typeof getFileSeqs === 'function' ? getFileSeqs() : ''")
-            if seqs:
+            if seqs and len([x for x in re.split(r"[,|]", str(seqs)) if x.strip()]) >= len(files):
                 break
-        if not seqs:
-            print("✗ 첨부 업로드가 끝나지 않았습니다(FILE_SEQS 비어 있음). 제출하지 않았습니다.")
+        if not seqs or len([x for x in re.split(r"[,|]", str(seqs)) if x.strip()]) < len(files):
+            print(f"✗ 첨부 업로드가 끝나지 않았습니다(FILE_SEQS={seqs!r}, 파일 {len(files)}개). 제출하지 않았습니다.")
             print("  alerts:", alerts)
             ctx.close()
             return 1
@@ -132,14 +135,15 @@ def submit(rt_seq: str, file_path: Path, text: str, dry_run: bool,
         fr = _course_frame(page)
         body = fr.locator("body").inner_text(timeout=8000)
         ok_time = "제출일시" in body
-        ok_file = file_path.name in body
+        missing = [f.name for f in files if f.name not in body]
+        ok_file = not missing
         ctx.close()
 
     if ok_time and ok_file:
         m = re.search(r"제출일시\s*(\S+\s*\S*\s*\S*)", body)
-        print(f"✓ 제출 확인됨 — {m.group(1) if m else ''} · {file_path.name}")
+        print(f"✓ 제출 확인됨 — {m.group(1) if m else ''} · {', '.join(f.name for f in files)}")
         return 0
-    print(f"✗ 제출 확인 실패 (제출일시={ok_time}, 첨부={ok_file}). 화면에서 직접 확인하세요.")
+    print(f"✗ 제출 확인 실패 (제출일시={ok_time}, 안 보이는 첨부={missing}). 화면에서 직접 확인하세요.")
     print("  alerts:", alerts)
     return 1
 
@@ -147,7 +151,8 @@ def submit(rt_seq: str, file_path: Path, text: str, dry_run: bool,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--rt-seq", required=True, help="과제 RT_SEQ (과제 목록 링크에 있음)")
-    ap.add_argument("--file", required=True, type=Path)
+    ap.add_argument("--file", required=True, type=Path, nargs="+",
+                    help="첨부 파일(여러 개면 공백으로 나열)")
     ap.add_argument("--text", default="요약서를 제출합니다.")
     ap.add_argument("--dry-run", action="store_true",
                     help="첨부 업로드까지만 하고 제출은 안 함")
@@ -160,7 +165,7 @@ def main():
         sys.stderr.write("제출 거부: 과제 제출은 사용자가 그 주차 제출을 명시적으로 지시했을 때만 한다(1116). "
                          "지시가 있으면 --user-approved 를 붙여 다시 실행한다. 루틴·자동 실행은 저장까지만 한다.\n")
         sys.exit(3)
-    sys.exit(submit(a.rt_seq, a.file.expanduser(), a.text, a.dry_run, a.course))
+    sys.exit(submit(a.rt_seq, [f.expanduser() for f in a.file], a.text, a.dry_run, a.course))
 
 
 if __name__ == "__main__":
